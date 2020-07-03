@@ -16,7 +16,6 @@ def train(feature,
     # Step 1: Get dataset.
     mol_strings, properties = dataset_reader.read(dataset_path)
     if len(mol_strings) == 0:
-        print('return')
         return
 
     Xs, Ys = process(feature, mol_strings, properties)
@@ -40,6 +39,7 @@ def train(feature,
     Ys_test_pred = model.predict(Xs_test)
     error = mean_squared_error(Ys_test, Ys_test_pred)
     print('Mean Squared Error = {}'.format(error))
+    return error
 
 if __name__ == '__main__':
 

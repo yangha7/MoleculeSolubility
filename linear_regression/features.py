@@ -32,12 +32,15 @@ class AtomFeature(Feature):
         for idx, atom_id in enumerate(self.atoms):
             at = Chem.MolFromSmarts('[#{}]'.format(atom_id))
             count[idx] = float(len(mol.GetSubstructMatches(at)))
-        print(mol_string, count)
+        # print(mol_string, count)
         return count
 
     def description(self):
         from misc.periodic_table import periodic_table
         return [periodic_table[atom-1] for atom in self.atoms]
+
+    def __len__(self):
+        return len(self.atoms)
 
 class FunctionalGroupFeature(Feature):
     def __init__(self, func_groups=[]):
@@ -61,6 +64,9 @@ class FunctionalGroupFeature(Feature):
     def description(self):
         return self.func_groups
 
+    def __len__(self):
+        return len(self.func_groups)
+
 class WeightFeature(Feature):
     def __init__(self):
         super(WeightFeature, self).__init__()
@@ -72,6 +78,9 @@ class WeightFeature(Feature):
 
     def description(self):
         return ['Mol weight']
+
+    def __len__(self):
+        return 1
 
 class IntegrateFeature(Feature):
     """
@@ -95,6 +104,47 @@ class IntegrateFeature(Feature):
         for feature in self.features:
             feature_desc = feature_desc + feature.description()
         return feature_desc
+
+    def __len__(self):
+        return sum([len(feature) for feature in self.features])
+
+class SubsetFeature(Feature):
+    """
+    Subset Features.
+    """
+    def __init__(self, feature):
+        super(SubsetFeature, self).__init__()
+        self.base_feature = feature
+        self.n_total_features = len(self.base_feature)
+        self.mask = np.ones([self.n_total_features], np.int32)
+        self.mask_indexes = self._get_mask_index(self.mask)
+
+    def set_mask(self, mask):
+        self.mask = mask
+        self.mask_indexes = self._get_mask_index(self.mask)
+
+    def _get_mask_index(self, mask):
+        index = []
+        for idx in range(len(mask)):
+            if mask[idx] > 0:
+                index.append(idx)
+        return np.array(index)
+
+    def feature(self, mol_string):
+        return self.base_feature.feature(mol_string)[self.mask_indexes]
+
+    def description(self):
+        feature_desc = self.base_feature.description()
+
+        new_feature_desc = []
+        for i in range(len(self.mask)):
+            if self.mask[i] > 0:
+                new_feature_desc.append(feature_desc[i])
+
+        return new_feature_desc
+
+    def __len__(self):
+        return int(sum(self.mask))
 
 
 def process(feature, mol_strings, ys):

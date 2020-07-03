@@ -19,7 +19,7 @@ reader = DelaneyReader()
 train(feature=feature,
       model=model,
       test_ratio=0.1,
-      dataset_path="./dataset/delaney.csv",
+      dataset_path="../../dataset/delaney.csv",
       dataset_reader=reader)
 
 # print(model.coef_)
